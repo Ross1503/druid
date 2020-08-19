@@ -38,7 +38,7 @@ env:
 # output.  To compensate, use travis_wait to extend the timeout.
 before_install:
   - sudo apt-get install openjdk-8-jdk
-  - sudo apt-get install mvn
+  - sudo apt-get install maven
   - export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-arm64/
 
 install: MAVEN_OPTS='-Xmx3000m' travis_wait 15 ${MVN} clean install -q -ff ${MAVEN_SKIP} ${MAVEN_SKIP_TESTS} -T1C
