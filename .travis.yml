@@ -36,6 +36,11 @@ env:
 # Add various options to make 'mvn install' fast and skip javascript compile (-Ddruid.console.skip=true) since it is not
 # needed. Depending on network speeds, "mvn -q install" may take longer than the default 10 minute timeout to print any
 # output.  To compensate, use travis_wait to extend the timeout.
+before_install:
+  - sudo apt-get install openjdk-8-jdk
+  - sudo apt-get install mvn
+  - export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-arm64/
+
 install: MAVEN_OPTS='-Xmx3000m' travis_wait 15 ${MVN} clean install -q -ff ${MAVEN_SKIP} ${MAVEN_SKIP_TESTS} -T1C
 
 stages:
