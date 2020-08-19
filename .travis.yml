@@ -47,25 +47,32 @@ stages:
 jobs:
   include:
     - name: "animal sniffer checks"
+      arch: arm64
       script: ${MVN} animal-sniffer:check --fail-at-end
 
     - name: "checkstyle"
+      arch: arm64
       script: ${MVN} checkstyle:checkstyle --fail-at-end
 
     - name: "enforcer checks"
+      arch: arm64
       script: ${MVN} enforcer:enforce --fail-at-end
 
     - name: "forbidden api checks"
+      arch: arm64
       script: ${MVN} forbiddenapis:check forbiddenapis:testCheck --fail-at-end
 
     - name: "pmd checks"
+      arch: arm64
       script: ${MVN} pmd:check --fail-at-end  # TODO: consider adding pmd:cpd-check
 
     - name: "spotbugs checks"
+      arch: arm64
       script: ${MVN} spotbugs:check --fail-at-end -pl '!benchmarks'
 
     - name: "license checks"
       install: skip
+      arch: arm64
       before_script: &setup_generate_license
         - sudo apt-get update && sudo apt-get install python3 python3-pip python3-setuptools -y
         - pip3 install wheel  # install wheel first explicitly
@@ -83,12 +90,14 @@ jobs:
 
     - name: "(openjdk8) strict compilation"
       install: skip
+      arch: arm64
       # Strict compilation requires more than 2 GB
       script: >
         MAVEN_OPTS='-Xmx3000m' ${MVN} clean -Pstrict compile test-compile --fail-at-end
         -pl '!benchmarks' ${MAVEN_SKIP} ${MAVEN_SKIP_TESTS}
 
     - name: "analyze dependencies"
+      arch: arm64
       script: |-
         MAVEN_OPTS='-Xmx3000m' ${MVN} ${MAVEN_SKIP} dependency:analyze -DoutputXML=true -DignoreNonCompile=true -DfailOnWarning=true || { echo "
 
@@ -111,6 +120,7 @@ jobs:
         " && false; }
 
     - name: "intellij inspections"
+      arch: arm64
       script: >
         docker run --rm
         -v $(pwd):/project
@@ -123,6 +133,7 @@ jobs:
 
     - &package
       name: "(openjdk8) packaging check"
+      arch: arm64
       install: skip
       before_script: *setup_generate_license
       script: >
@@ -131,10 +142,12 @@ jobs:
 
     - <<: *package
       name: "(openjdk11) packaging check"
+      arch: arm64
       jdk: openjdk11
 
     - &test_processing_module
       name: "(openjdk8) processing module test"
+      arch: arm64
       env:
       - MAVEN_PROJECTS='processing'
       before_script:
@@ -192,77 +205,93 @@ jobs:
 
     - <<: *test_processing_module
       name: "(openjdk11) processing module test"
+      arch: arm64
       jdk: openjdk11
 
     - &test_processing_module_sqlcompat
       <<: *test_processing_module
       name: "(openjdk8) processing module test (SQL Compatibility)"
+      arch: arm64
       before_script: &setup_sqlcompat
       - export DRUID_USE_DEFAULT_VALUE_FOR_NULL=false
 
     - <<: *test_processing_module_sqlcompat
       name: "(openjdk11) processing module test (SQL Compatibility)"
+      arch: arm64
       jdk: openjdk11
 
     - &test_indexing_module
       <<: *test_processing_module
       name: "(openjdk8) indexing modules test"
+      arch: arm64
       env:
       - MAVEN_PROJECTS='indexing-hadoop,indexing-service,extensions-core/kafka-indexing-service,extensions-core/kinesis-indexing-service'
 
     - <<: *test_indexing_module
       name: "(openjdk11) indexing modules test"
+      arch: arm64
       jdk: openjdk11
 
     - &test_indexing_module_sqlcompat
       <<: *test_indexing_module
       name: "(openjdk8) indexing modules test (SQL Compatibility)"
+      arch: arm64
       before_script: *setup_sqlcompat
 
     - <<: *test_indexing_module_sqlcompat
       name: "(openjdk11) indexing modules test (SQL Compatibility)"
+      arch: arm64
       jdk: openjdk11
 
     - &test_server_module
       <<: *test_processing_module
       name: "(openjdk8) server module test"
+      arch: arm64
       env:
         - MAVEN_PROJECTS='server'
 
     - <<: *test_server_module
       name: "(openjdk11) server module test"
+      arch: arm64
       jdk: openjdk11
 
     - &test_server_module_sqlcompat
       <<: *test_server_module
       name: "(openjdk8) server module test (SQL Compatibility)"
+      arch: arm64
       before_script: *setup_sqlcompat
 
     - <<: *test_server_module_sqlcompat
       name: "(openjdk11) server module test (SQL Compatibility)"
+      arch: arm64
       jdk: openjdk11
 
     - &test_other_modules
       <<: *test_processing_module
       name: "(openjdk8) other modules test"
+      arch: arm64
       env:
         - MAVEN_PROJECTS='!processing,!indexing-hadoop,!indexing-service,!extensions-core/kafka-indexing-service,!extensions-core/kinesis-indexing-service,!server,!web-console,!integration-tests'
 
     - <<: *test_other_modules
       name: "(openjdk11) other modules test"
+      arch: arm64
       jdk: openjdk11
 
     - &test_other_modules_sqlcompat
       <<: *test_other_modules
       name: "(openjdk8) other modules test (SQL Compatibility)"
+      arch: arm64
       before_script: *setup_sqlcompat
 
     - <<: *test_other_modules_sqlcompat
       name: "(openjdk11) other modules test (SQL Compatibility)"
+      arch: arm64
       jdk: openjdk11
 
     - name: "web console"
       install: skip
+      arch: arm64
       script:
         - ${MVN} test -pl 'web-console'
       after_success:
@@ -277,6 +306,7 @@ jobs:
 
     - name: "docs"
       install: (cd website && npm install)
+      arch: arm64
       script: |-
         (cd website && npm run lint && npm run spellcheck) || { echo "
 
@@ -299,6 +329,7 @@ jobs:
     - &integration_batch_index
       name: "(Compile=openjdk8, Run=openjdk8) batch index integration test"
       jdk: openjdk8
+      arch: arm64
       services: &integration_test_services
         - docker
       env: TESTNG_GROUPS='-Dgroups=batch-index' JVM_RUNTIME='-Djvm.runtime=8'
@@ -316,6 +347,7 @@ jobs:
     - &integration_input_format
       name: "(Compile=openjdk8, Run=openjdk8) input format integration test"
       jdk: openjdk8
+      arch: arm64
       services: *integration_test_services
       env: TESTNG_GROUPS='-Dgroups=input-format' JVM_RUNTIME='-Djvm.runtime=8'
       script: *run_integration_test
@@ -324,6 +356,7 @@ jobs:
     - &integration_input_source
       name: "(Compile=openjdk8, Run=openjdk8) input source integration test"
       jdk: openjdk8
+      arch: arm64
       services: *integration_test_services
       env: TESTNG_GROUPS='-Dgroups=input-source' JVM_RUNTIME='-Djvm.runtime=8'
       script: *run_integration_test
@@ -332,6 +365,7 @@ jobs:
     - &integration_perfect_rollup_parallel_batch_index
       name: "(Compile=openjdk8, Run=openjdk8) perfect rollup parallel batch index integration test"
       jdk: openjdk8
+      arch: arm64
       services: *integration_test_services
       env: TESTNG_GROUPS='-Dgroups=perfect-rollup-parallel-batch-index' JVM_RUNTIME='-Djvm.runtime=8'
       script: *run_integration_test
@@ -340,6 +374,7 @@ jobs:
     - &integration_kafka_index
       name: "(Compile=openjdk8, Run=openjdk8) kafka index integration test"
       jdk: openjdk8
+      arch: arm64
       services: *integration_test_services
       env: TESTNG_GROUPS='-Dgroups=kafka-index' JVM_RUNTIME='-Djvm.runtime=8'
       script: *run_integration_test
@@ -348,6 +383,7 @@ jobs:
     - &integration_kafka_index_slow
       name: "(Compile=openjdk8, Run=openjdk8) kafka index integration test slow"
       jdk: openjdk8
+      arch: arm64
       services: *integration_test_services
       env: TESTNG_GROUPS='-Dgroups=kafka-index-slow' JVM_RUNTIME='-Djvm.runtime=8'
       script: *run_integration_test
@@ -356,6 +392,7 @@ jobs:
     - &integration_kafka_transactional_index
       name: "(Compile=openjdk8, Run=openjdk8) transactional kafka index integration test"
       jdk: openjdk8
+      arch: arm64
       services: *integration_test_services
       env: TESTNG_GROUPS='-Dgroups=kafka-transactional-index' JVM_RUNTIME='-Djvm.runtime=8'
       script: *run_integration_test
@@ -364,6 +401,7 @@ jobs:
     - &integration_kafka_transactional_index_slow
       name: "(Compile=openjdk8, Run=openjdk8) transactional kafka index integration test slow"
       jdk: openjdk8
+      arch: arm64
       services: *integration_test_services
       env: TESTNG_GROUPS='-Dgroups=kafka-transactional-index-slow' JVM_RUNTIME='-Djvm.runtime=8'
       script: *run_integration_test
@@ -372,6 +410,7 @@ jobs:
     - &integration_kafka_format_tests
         name: "(Compile=openjdk8, Run=openjdk8) Kafka index integration test with various formats"
         jdk: openjdk8
+        arch: arm64
         services: *integration_test_services
         env: TESTNG_GROUPS='-Dgroups=kafka-data-format' JVM_RUNTIME='-Djvm.runtime=8'
         script: *run_integration_test
